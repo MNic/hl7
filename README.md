@@ -1,6 +1,6 @@
 # HL7
 
-![Test](https://github.com/mylanconnolly/hl7/workflows/Test/badge.svg)
+![Test](https://github.com/mnic/hl7/workflows/Test/badge.svg)
 
 This is a basic HL7 parser written in Go. There are no external dependencies,
 only the standard library is used for runtime code (`github.com/testify/assert`
@@ -26,7 +26,7 @@ particularly modern in Go.
 Installation is simple:
 
 ```bash
-$ go get github.com/mylanconnolly/hl7
+$ go get github.com/mnic/hl7
 ```
 
 ## Usage
@@ -45,7 +45,7 @@ example file with HL7 data in it gathered from
 [Ringholm bv](http://www.ringholm.com/docs/04300_en.htm).
 
 Further usage information can be found
-[here](https://pkg.go.dev/github.com/mylanconnolly/hl7).
+[here](https://pkg.go.dev/github.com/mnic/hl7).
 
 ## TODO
 

@@ -49,6 +49,12 @@ func (m *Message) Parse() error {
 	return nil
 }
 
+// Returns the first segment with a matching SubComponent Name / ID
+// MSH, PID, etc.
+func (m *Message) GetSegment(id string) ([]Segment, error) {
+	return m.segments[id], nil
+}
+
 // ReadSegment is used to "read" the next segment from the message.
 func (m *Message) ReadSegment() (Segment, error) {
 	var buf []byte

@@ -3,10 +3,33 @@ package hl7
 import (
 	"bufio"
 	"bytes"
+	"fmt"
+	"log"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestGetSegment(t *testing.T) {
+	file, err := os.ReadFile("./testdata/msg.hl7")
+	if err != nil {
+		log.Fatalf("Failed to read file")
+	}
+	reader := NewReader(bytes.NewReader(file))
+	msg, err := reader.ReadMessage()
+	if err != nil {
+		log.Fatalf("Failed to read message")
+	}
+	msg.Parse()
+	seg, err := msg.GetSegment(("PID"))
+	if err != nil {
+		log.Fatalf("Unable to read segment")
+	}
+	LastName, _ := seg[0].GetSubComponent(5, 0, 0, 0)
+	FirstName, _ := seg[0].GetSubComponent(5, 0, 1, 0)
+	t.Error(fmt.Println(LastName, FirstName))
+}
 
 func TestNewMessage(t *testing.T) {
 	tests := []struct {
