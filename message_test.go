@@ -3,13 +3,43 @@ package hl7
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"log"
 	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestUnmarshal(t *testing.T) {
+	type PIDMessage struct {
+		Id        string `hl7:"PID.0.0"`
+		FirstName string `hl7:"PID.5.1"`
+		LastName  string `hl7:"PID.5.0"`
+		Ehr       string `hl7:"MSH.2.0"`
+	}
+	hl7text := `MSH|^~\&|CERNER||PriorityHealth||||ORU^R01|Q479004375T431430612|P|2.3|
+	PID|||001677980||SMITH^CURTIS||19680219|M||||||||||929645156318|123456789|
+	PD1||||1234567890^LAST^FIRST^M^^^^^NPI|
+	OBR|1|341856649^HNAM_ORDERID|000002006326002362|648088^Basic Metabolic Panel|||20061122151600|||||||||1620^Hooker^Robert^L||||||20061122154733|||F|||||||||||20061122140000|
+	OBX|1|NM|GLU^Glucose Lvl|59|mg/dL|65-99^65^99|L||||F|||20061122154733|	
+	`
+	pid_message := PIDMessage{}
+	msg, err := NewMessage([]byte(hl7text))
+	if err != nil {
+		log.Fatalln("failed message creation")
+	}
+	msg.Parse()
+	// log for visibility
+	// seg, _ := msg.GetSegment("PID")
+	// fn, _ := seg[0].GetSubComponent(5, 0, 1, 0)
+	// t.Error(fmt.Printf("fn: %v", fn.String()))
+	// continue original test
+	msg.Unmarshal(&pid_message)
+	assert.Equal(t, "PID", pid_message.Id)
+	assert.Equal(t, "CURTIS", pid_message.FirstName)
+	assert.Equal(t, "SMITH", pid_message.LastName)
+	assert.Equal(t, "CERNER", pid_message.Ehr)
+}
 
 func TestGetSegment(t *testing.T) {
 	file, err := os.ReadFile("./testdata/msg.hl7")
@@ -28,7 +58,8 @@ func TestGetSegment(t *testing.T) {
 	}
 	LastName, _ := seg[0].GetSubComponent(5, 0, 0, 0)
 	FirstName, _ := seg[0].GetSubComponent(5, 0, 1, 0)
-	t.Error(fmt.Println(LastName, FirstName))
+	assert.Equal(t, "John", FirstName.String())
+	assert.Equal(t, "Jones", LastName.String())
 }
 
 func TestNewMessage(t *testing.T) {

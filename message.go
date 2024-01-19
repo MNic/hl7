@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"bytes"
 	"io"
+	"reflect"
+	"strings"
 	"sync"
 	"unicode"
 )
@@ -88,6 +90,80 @@ func (m *Message) ReadSegment() (Segment, error) {
 		return Segment{}, io.EOF
 	}
 	return newSegment(m.fieldSep, m.compSep, m.subCompSep, m.repeat, m.escape, buf), nil
+}
+
+// Find gets a value from a message using location syntax
+// finds the first occurence of the segment and first of repeating fields
+// if the loc is not valid an error is returned
+func (m *Message) Find(loc string) (string, error) {
+	return m.Get(NewLocation(loc))
+}
+
+// FindAll gets all values from a message using location syntax
+// finds all occurences of the segments and all repeating fields
+// if the loc is not valid an error is returned
+// func (m *Message) FindAll(loc string) ([]string, error) {
+// 	return m.GetAll(NewLocation(loc))
+// }
+
+// Get returns the first value specified by the Location
+func (m *Message) Get(l *Location) (string, error) {
+	// if l.Segment == "" {
+	// 	return string(m.Value), nil
+	// }
+	seg, err := m.GetSegment(l.Segment)
+	if err != nil {
+		return "", err
+	}
+	sc, _ := seg[0].GetSubComponent(l.FieldSeq, 0, l.Comp, l.SubComp)
+	return sc.String(), err
+}
+
+// GetAll returns all values specified by the Location
+// func (m *Message) GetAll(l *Location) ([]string, error) {
+// 	vals := []string{}
+// 	if l.Segment == "" {
+// 		vals = append(vals, string(m.Value))
+// 		return vals, nil
+// 	}
+// 	segs, err := m.AllSegments(l.Segment)
+// 	if err != nil {
+// 		return vals, err
+// 	}
+// 	for _, s := range segs {
+// 		vs, err := s.GetAll(l)
+// 		if err != nil {
+// 			return vals, err
+// 		}
+// 		vals = append(vals, vs...)
+// 	}
+// 	return vals, nil
+// }
+
+// Unmarshal fills a structure from an HL7 message
+// It will panic if interface{} is not a pointer to a struct
+// Unmarshal will decode the entire message before trying to set values
+// it will set the first matching segment / first matching field
+// repeating segments and fields is not well suited to this
+// for the moment all unmarshal target fields must be strings
+func (m *Message) Unmarshal(it interface{}) error {
+	st := reflect.ValueOf(it).Elem()
+	stt := st.Type()
+	for i := 0; i < st.NumField(); i++ {
+		fld := stt.Field(i)
+		r := fld.Tag.Get("hl7")
+		if r != "" {
+			if val, _ := m.Find(r); val != "" {
+				if st.Field(i).CanSet() {
+					// TODO support fields other than string
+					//fldT := st.Field(i).Type()
+					st.Field(i).SetString(strings.TrimSpace(val))
+				}
+			}
+		}
+	}
+
+	return nil
 }
 
 // NewMessage takes a byte slice and returns a Message that is ready to use.
